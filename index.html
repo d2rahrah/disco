@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Life Battle HUD</title>
+  <style>
+    :root {
+      --bg: #05060a;
+      --panel: #101320;
+      --accent: #4af2a1;
+      --accent-soft: #4af2a133;
+      --text-main: #f5f7ff;
+      --text-muted: #8b90a5;
+      --border: #22263a;
+      --danger: #ff4b6e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: #05060a;
+      filter: contrast(1.1) brightness(1.05);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    /* FLOATING HUD ANIMATION */
+    .hud {
+      width: 360px;
+      background: linear-gradient(145deg, #0b0e18, #05060a);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow:
+        0 0 0 1px #000000aa,
+        0 18px 40px #000000aa;
+      padding: 16px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-3px); }
+    }
+
+    /* BACKGROUND GLOW */
+    .hud::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(circle at 0 0, var(--accent-soft), transparent 55%),
+        radial-gradient(circle at 100% 0, #4a9ff233, transparent 55%);
+      opacity: 0.7;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    /* SCANLINE SWEEP */
+    .hud::after {
+      content: "";
+      position: absolute;
+      top: -150%;
+      left: 0;
+      width: 100%;
+      height: 300%;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.03) 0,
+        rgba(255,255,255,0.03) 1px,
+        transparent 2px
+      );
+      animation: hudSweep 6s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes hudSweep {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100%); }
+    }
+
+    .hud-header,
+    .hud-row {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hud-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 4px;
+    }
+
+    .hud-title {
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .hud-status {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--accent);
+    }
+
+    .hud-row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 10px;
+    }
+
+    /* CARD WITH GLOW */
+    .hud-card {
+      background: radial-gradient(circle at top, #181c30 0, #090b12 60%);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 10px 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow:
+        0 0 12px #000000aa,
+        0 0 18px #0af5a022;
+    }
+
+    .hud-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+    }
+
+    .hud-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .hud-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* ENERGY BAR */
+    .hud-bar {
+      margin-top: 4px;
+      height: 6px;
+      border-radius: 999px;
+      background: #11131f;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hud-bar-fill {
+      height: 100%;
+      width: 60%;
+      background: linear-gradient(90deg, var(--accent), #4af2e0);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.9; }
+      50% { opacity: 0.5; }
+    }
+
+    .hud-timer {
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+    }
+
+    .hud-timer-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .hud-footer {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+      padding-top: 8px;
+      border-top: 1px solid #15192a;
+      gap: 8px;
+    }
+
+    .hud-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* BUTTONS WITH GLOW */
+    .hud-btn {
+      border-radius: 999px;
+      border: 1px solid #2a3046;
+      background: #0b0f1c;
+      color: var(--text-main);
+      font-size: 11px;
+      padding: 5px 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+    }
+
+    .hud-btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, var(--accent-soft), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .hud-btn:hover::after {
+      opacity: 0.25;
+    }
+
+    .hud-btn:hover {
+      background: #141a2b;
+      border-color: var(--accent-soft);
+      transform: translateY(-1px);
+    }
+
+    .hud-btn--danger {
+      border-color: #3a1220;
+      background: #150811;
+      color: #ff9ab0;
+    }
+
+    .hud-btn--danger:hover {
+      border-color: var(--danger);
+      background: #1f0a16;
+    }
+
+    .hud-footnote {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <div class="hud-header">
+      <div class="hud-title">Life Battle HUD</div>
+      <div class="hud-status">Tick: T+0123</div>
+    </div>
+
+    <div class="hud-row">
+      <div class="hud-card">
+        <div class="hud-label">Player</div>
+        <div class="hud-value">rah</div>
+        <div class="hud-sub">Blocks today</div>
+        <div class="hud-bar">
+          <div class="hud-bar-fill"></div>
+        </div>
+        <div class="hud-sub">6 / 10 remaining</div>
+      </div>
+
+      <div class="hud-card">
+        <div class="hud-label">Score</div>
+        <div class="hud-value">124</div>
+        <div class="hud-sub">Territory: 18 · Kills: 7</div>
+        <div style="margin-top:6px;">
+          <div class="hud-timer-label">Next tick</div>
+          <div class="hud-timer">05:12:44</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hud-footer">
+      <div class="hud-actions">
+        <button class="hud-btn">
+          <span>⬆</span>
+          PLACE
+        </button>
+        <button class="hud-btn hud-btn--danger">
+          <span>✕</span>
+          CLEAR
+        </button>
+      </div>
+      <div class="hud-footnote">STATIC MOCKUP · WIRES ONLY</div>
+    </div>
+  </div>
+</body>
+</html>
